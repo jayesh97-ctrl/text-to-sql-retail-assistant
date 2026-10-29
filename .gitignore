@@ -1,0 +1,8 @@
+.env
+data/*.db
+data/feedback.csv
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+eval/results/

@@ -1,0 +1,201 @@
+[
+  {
+    "id": "Q01",
+    "category": "simple_aggregate",
+    "question": "What is the total revenue from valid sales?",
+    "gold_sql": "SELECT ROUND(SUM(line_revenue),2) FROM fact_sales WHERE is_valid_sale_line = 1",
+    "ordered": false
+  },
+  {
+    "id": "Q02",
+    "category": "simple_aggregate",
+    "question": "How many orders were placed?",
+    "gold_sql": "SELECT COUNT(DISTINCT invoice_no) FROM fact_sales WHERE is_valid_sale_line = 1",
+    "ordered": false
+  },
+  {
+    "id": "Q03",
+    "category": "simple_aggregate",
+    "question": "What is the average order value?",
+    "gold_sql": "SELECT ROUND(SUM(line_revenue)*1.0/COUNT(DISTINCT invoice_no),2) FROM fact_sales WHERE is_valid_sale_line = 1",
+    "ordered": false
+  },
+  {
+    "id": "Q04",
+    "category": "simple_aggregate",
+    "question": "How many units were sold in total?",
+    "gold_sql": "SELECT SUM(quantity) FROM fact_sales WHERE is_valid_sale_line = 1",
+    "ordered": false
+  },
+  {
+    "id": "Q05",
+    "category": "simple_aggregate",
+    "question": "How many different customers have placed a valid order?",
+    "gold_sql": "SELECT COUNT(DISTINCT customer_id) FROM fact_sales WHERE is_valid_sale_line = 1 AND customer_id IS NOT NULL",
+    "ordered": false
+  },
+  {
+    "id": "Q06",
+    "category": "joins_and_filters",
+    "question": "What is the total revenue from Germany?",
+    "gold_sql": "SELECT ROUND(SUM(f.line_revenue),2) FROM fact_sales f JOIN dim_country c ON c.country_key=f.country_key WHERE f.is_valid_sale_line = 1 AND c.country='Germany'",
+    "ordered": false
+  },
+  {
+    "id": "Q07",
+    "category": "joins_and_filters",
+    "question": "Which 5 countries have the highest revenue?",
+    "gold_sql": "SELECT c.country, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_country c ON c.country_key=f.country_key WHERE f.is_valid_sale_line = 1 GROUP BY c.country ORDER BY revenue DESC LIMIT 5",
+    "ordered": true
+  },
+  {
+    "id": "Q08",
+    "category": "joins_and_filters",
+    "question": "Show the top 10 products by revenue.",
+    "gold_sql": "SELECT p.product_description, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_product p ON p.stock_code=f.stock_code WHERE f.is_valid_sale_line = 1 GROUP BY p.stock_code, p.product_description ORDER BY revenue DESC LIMIT 10",
+    "ordered": true
+  },
+  {
+    "id": "Q09",
+    "category": "joins_and_filters",
+    "question": "Which 5 products sold the most units?",
+    "gold_sql": "SELECT p.product_description, SUM(f.quantity) AS units FROM fact_sales f JOIN dim_product p ON p.stock_code=f.stock_code WHERE f.is_valid_sale_line = 1 GROUP BY p.stock_code, p.product_description ORDER BY units DESC LIMIT 5",
+    "ordered": true
+  },
+  {
+    "id": "Q10",
+    "category": "joins_and_filters",
+    "question": "How many customers are based in the United Kingdom?",
+    "gold_sql": "SELECT COUNT(*) FROM dim_customer WHERE primary_country='United Kingdom'",
+    "ordered": false
+  },
+  {
+    "id": "Q11",
+    "category": "joins_and_filters",
+    "question": "What is the average number of lifetime orders per customer?",
+    "gold_sql": "SELECT ROUND(AVG(lifetime_orders),2) FROM dim_customer",
+    "ordered": false
+  },
+  {
+    "id": "Q12",
+    "category": "time",
+    "question": "What was the revenue in each month?",
+    "gold_sql": "SELECT strftime('%Y-%m', d.full_date) AS month, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_date d ON d.date_key=f.date_key WHERE f.is_valid_sale_line = 1 GROUP BY month ORDER BY month",
+    "ordered": true
+  },
+  {
+    "id": "Q13",
+    "category": "time",
+    "question": "Which month had the highest revenue?",
+    "gold_sql": "SELECT strftime('%Y-%m', d.full_date) AS month, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_date d ON d.date_key=f.date_key WHERE f.is_valid_sale_line = 1 GROUP BY month ORDER BY revenue DESC LIMIT 1",
+    "ordered": false
+  },
+  {
+    "id": "Q14",
+    "category": "time",
+    "question": "How much revenue came from weekend orders?",
+    "gold_sql": "SELECT ROUND(SUM(f.line_revenue),2) FROM fact_sales f JOIN dim_date d ON d.date_key=f.date_key WHERE f.is_valid_sale_line = 1 AND d.is_weekend=1",
+    "ordered": false
+  },
+  {
+    "id": "Q15",
+    "category": "time",
+    "question": "What was the revenue in the fourth quarter of 2011?",
+    "gold_sql": "SELECT ROUND(SUM(f.line_revenue),2) FROM fact_sales f JOIN dim_date d ON d.date_key=f.date_key WHERE f.is_valid_sale_line = 1 AND d.year=2011 AND d.quarter=4",
+    "ordered": false
+  },
+  {
+    "id": "Q16",
+    "category": "time",
+    "question": "Which day of the week has the highest revenue?",
+    "gold_sql": "SELECT d.day_name, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_date d ON d.date_key=f.date_key WHERE f.is_valid_sale_line = 1 GROUP BY d.day_name ORDER BY revenue DESC LIMIT 1",
+    "ordered": false
+  },
+  {
+    "id": "Q17",
+    "category": "business_rules",
+    "question": "What is the order cancellation rate?",
+    "gold_sql": "SELECT ROUND(COUNT(DISTINCT CASE WHEN is_cancelled=1 THEN invoice_no END)*1.0/COUNT(DISTINCT invoice_no),4) FROM fact_sales",
+    "ordered": false,
+    "accept_percent_scale": true
+  },
+  {
+    "id": "Q18",
+    "category": "business_rules",
+    "question": "How much revenue was lost to cancellations?",
+    "gold_sql": "SELECT ROUND(SUM(line_revenue),2) FROM fact_sales WHERE is_cancelled=1 AND is_adjustment_line=0",
+    "ordered": false
+  },
+  {
+    "id": "Q19",
+    "category": "business_rules",
+    "question": "What share of orders are guest orders?",
+    "gold_sql": "SELECT ROUND(COUNT(DISTINCT CASE WHEN is_guest_order=1 THEN invoice_no END)*1.0/COUNT(DISTINCT invoice_no),4) FROM fact_sales",
+    "ordered": false,
+    "accept_percent_scale": true
+  },
+  {
+    "id": "Q20",
+    "category": "business_rules",
+    "question": "How many postage or fee lines are in the data?",
+    "gold_sql": "SELECT COUNT(*) FROM fact_sales WHERE is_adjustment_line=1",
+    "ordered": false
+  },
+  {
+    "id": "Q21",
+    "category": "business_rules",
+    "question": "How much revenue came from returning customers?",
+    "gold_sql": "SELECT ROUND(SUM(f.line_revenue),2) FROM fact_sales f JOIN dim_customer c ON c.customer_id=f.customer_id WHERE f.is_valid_sale_line = 1 AND f.is_guest_order=0 AND c.lifetime_orders>1",
+    "ordered": false
+  },
+  {
+    "id": "Q22",
+    "category": "data_traps",
+    "question": "Which product code earned the most revenue?",
+    "gold_sql": "SELECT f.stock_code, ROUND(SUM(f.line_revenue),2) AS revenue FROM fact_sales f JOIN dim_product p ON p.stock_code=f.stock_code WHERE f.is_valid_sale_line = 1 AND p.is_adjustment_line=0 GROUP BY f.stock_code ORDER BY revenue DESC LIMIT 1",
+    "ordered": false,
+    "note": "Without excluding postage and fee lines, DOT (DOTCOM POSTAGE) wins."
+  },
+  {
+    "id": "Q23",
+    "category": "data_traps",
+    "question": "How many units of product 15056BL were sold?",
+    "gold_sql": "SELECT SUM(quantity) FROM fact_sales WHERE UPPER(stock_code)='15056BL' AND is_valid_sale_line = 1",
+    "ordered": false,
+    "note": "The code also exists as 15056bl, so a case sensitive match misses 87 units."
+  },
+  {
+    "id": "Q24",
+    "category": "data_traps",
+    "question": "What is our average order value for customers who are not guests?",
+    "gold_sql": "SELECT ROUND(SUM(line_revenue)*1.0/COUNT(DISTINCT invoice_no),2) FROM fact_sales WHERE is_valid_sale_line = 1 AND is_guest_order=0",
+    "ordered": false
+  },
+  {
+    "id": "Q25",
+    "category": "unanswerable",
+    "question": "What is our profit margin?",
+    "gold_sql": null,
+    "ordered": false,
+    "expect": "refuse",
+    "note": "There is no cost data in the database."
+  },
+  {
+    "id": "Q26",
+    "category": "unanswerable",
+    "question": "What was the average customer satisfaction score?",
+    "gold_sql": null,
+    "ordered": false,
+    "expect": "refuse",
+    "note": "There is no survey data in the database."
+  },
+  {
+    "id": "Q27",
+    "category": "unanswerable",
+    "question": "What was the revenue in January 2012?",
+    "gold_sql": null,
+    "ordered": false,
+    "expect": "refuse_or_empty",
+    "note": "Data ends on 9 December 2011."
+  }
+]
